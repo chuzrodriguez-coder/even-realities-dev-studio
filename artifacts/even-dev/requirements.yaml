@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "For smooth page transitions and premium UI animations"
+  "lucide-react": "For crisp, modern icons"
+  "clsx": "For conditional class name merging"
+  "tailwind-merge": "For resolving Tailwind class conflicts"
+  "date-fns": "For formatting timestamps in logs and feature creation dates"
+  "react-hook-form": "For robust form state management"
+  "@hookform/resolvers": "For Zod validation integration with forms"
+
+images:
+  - path: "artifacts/even-dev/public/images/bg-glow.png"
+    description: "Abstract, subtle dark background with a very soft, faint tech-green radial gradient glow in the center, minimal and professional"
+    aspect_ratio: "16:9"
+
+notes:
+  - Types are imported from `@workspace/api-client-react/src/generated/api.schemas`
+  - React Query is used for all API state
+  - Styling leans heavily into a "dark mode developer tool" aesthetic with neon green accents

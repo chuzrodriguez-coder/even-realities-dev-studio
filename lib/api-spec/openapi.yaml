@@ -1,0 +1,569 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.2.0
+  description: Even Realities Dev Studio API — BLE simulator, display preview, and feature workbench
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: ble
+    description: BLE protocol simulator
+  - name: features
+    description: Custom feature management
+  - name: display
+    description: Display layout utilities
+  - name: break-timer
+    description: Work break timer feature settings
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /ble/send-command:
+    post:
+      operationId: bleSendCommand
+      tags: [ble]
+      summary: Simulate sending a BLE command to the glasses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BleCommandRequest"
+      responses:
+        "200":
+          description: Command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BleCommandResponse"
+
+  /ble/commands:
+    get:
+      operationId: getBleCommands
+      tags: [ble]
+      summary: Get the log of simulated BLE commands
+      responses:
+        "200":
+          description: Command log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BleCommandLog"
+    delete:
+      operationId: clearBleCommands
+      tags: [ble]
+      summary: Clear the BLE command log
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /display/layout-text:
+    post:
+      operationId: layoutText
+      tags: [display]
+      summary: Calculate how text splits into packets for the glasses display
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TextLayoutRequest"
+      responses:
+        "200":
+          description: Layout result with pages and packets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TextLayoutResponse"
+
+  /features:
+    get:
+      operationId: listFeatures
+      tags: [features]
+      summary: List all saved custom features
+      responses:
+        "200":
+          description: Feature list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeatureList"
+    post:
+      operationId: createFeature
+      tags: [features]
+      summary: Create a new custom feature
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeatureRequest"
+      responses:
+        "201":
+          description: Created feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+
+  /features/{id}:
+    get:
+      operationId: getFeature
+      tags: [features]
+      summary: Get a feature by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateFeature
+      tags: [features]
+      summary: Update a custom feature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFeatureRequest"
+      responses:
+        "200":
+          description: Updated feature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feature"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteFeature
+      tags: [features]
+      summary: Delete a custom feature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /break-timer/settings:
+    get:
+      operationId: getBreakTimerSettings
+      tags: [break-timer]
+      summary: Get the current break timer settings
+      responses:
+        "200":
+          description: Current settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreakTimerSettings"
+    put:
+      operationId: updateBreakTimerSettings
+      tags: [break-timer]
+      summary: Update break timer settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBreakTimerSettingsRequest"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BreakTimerSettings"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    BleCommandRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          enum: [G1, G2]
+          description: Target glasses model
+        target:
+          type: string
+          enum: [left, right, both]
+          description: Which arm to send to
+        commandType:
+          type: string
+          enum: [text, image, ai_response, microphone_on, microphone_off, raw, teleprompter, auth, display_config, notification]
+          description: Type of command
+        payload:
+          type: object
+          description: Command-specific payload
+          additionalProperties: true
+        rawHex:
+          type: string
+          description: Raw hex bytes for custom commands (e.g. "0x0E 0x01")
+      required: [model, target, commandType]
+
+    BleCommandResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        model:
+          type: string
+        target:
+          type: string
+        commandType:
+          type: string
+        status:
+          type: string
+          enum: [ack, nack, pending]
+        responseHex:
+          type: string
+          description: Simulated response bytes from the glasses
+        description:
+          type: string
+          description: Human-readable explanation of what happened
+        packets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlePacket"
+      required: [id, timestamp, model, target, commandType, status, description]
+
+    BlePacket:
+      type: object
+      properties:
+        index:
+          type: integer
+        hexBytes:
+          type: string
+        sizeBytes:
+          type: integer
+        side:
+          type: string
+          enum: [left, right]
+      required: [index, hexBytes, sizeBytes, side]
+
+    BleCommandLog:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            $ref: "#/components/schemas/BleCommandResponse"
+        total:
+          type: integer
+      required: [commands, total]
+
+    TextLayoutRequest:
+      type: object
+      properties:
+        model:
+          type: string
+          enum: [G1, G2]
+        text:
+          type: string
+        linesPerScreen:
+          type: integer
+          default: 5
+        maxWidthPx:
+          type: integer
+          description: Max display width in pixels (G1=488, G2=640)
+        fontSizePx:
+          type: integer
+          default: 21
+      required: [model, text]
+
+    TextLayoutResponse:
+      type: object
+      properties:
+        model:
+          type: string
+        totalLines:
+          type: integer
+        totalPages:
+          type: integer
+        totalPackets:
+          type: integer
+        pages:
+          type: array
+          items:
+            $ref: "#/components/schemas/TextPage"
+        displayWidthPx:
+          type: integer
+        linesPerScreen:
+          type: integer
+      required: [model, totalLines, totalPages, totalPackets, pages, displayWidthPx, linesPerScreen]
+
+    TextPage:
+      type: object
+      properties:
+        pageIndex:
+          type: integer
+        lines:
+          type: array
+          items:
+            type: string
+        packets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlePacket"
+      required: [pageIndex, lines, packets]
+
+    Feature:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        targetModel:
+          type: string
+          enum: [G1, G2, both]
+        category:
+          type: string
+          enum: [display, ai, notification, gesture, teleprompter, image, custom]
+        code:
+          type: string
+          description: JavaScript/TypeScript code for the feature
+        config:
+          type: object
+          additionalProperties: true
+        isEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, description, targetModel, category, isEnabled, createdAt, updatedAt]
+
+    CreateFeatureRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        targetModel:
+          type: string
+          enum: [G1, G2, both]
+        category:
+          type: string
+          enum: [display, ai, notification, gesture, teleprompter, image, custom]
+        code:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        isEnabled:
+          type: boolean
+          default: true
+      required: [name, description, targetModel, category]
+
+    UpdateFeatureRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        targetModel:
+          type: string
+          enum: [G1, G2, both]
+        category:
+          type: string
+          enum: [display, ai, notification, gesture, teleprompter, image, custom]
+        code:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        isEnabled:
+          type: boolean
+
+    FeatureList:
+      type: object
+      properties:
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feature"
+        total:
+          type: integer
+      required: [features, total]
+
+    NotificationMode:
+      type: string
+      enum: [visual, audio, text, image, transparency, colorSequence]
+      description: How the break reminder is delivered to the user via the glasses
+
+    BreakTimerSettings:
+      type: object
+      properties:
+        id:
+          type: string
+        workDurationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 240
+          description: Minutes of work before a break (default 45)
+        breakDurationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 60
+          description: Minutes of the break period (default 5)
+        notificationModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationMode"
+          description: Active notification delivery methods
+        workMessage:
+          type: string
+          description: Text shown when starting a work period
+        breakMessage:
+          type: string
+          description: Text shown when starting a break
+        endShiftMessage:
+          type: string
+          description: Text shown when the work shift ends
+        audioEnabled:
+          type: boolean
+          description: Whether to play a chime sound with notifications
+        colorSequencePattern:
+          type: string
+          enum: [pulse, flash, sweep, wave, radiate]
+          description: Animation pattern used for the colorSequence notification mode
+        transparencyLevel:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: HUD overlay opacity for the transparency notification mode
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - workDurationMinutes
+        - breakDurationMinutes
+        - notificationModes
+        - workMessage
+        - breakMessage
+        - endShiftMessage
+        - audioEnabled
+        - colorSequencePattern
+        - transparencyLevel
+        - updatedAt
+
+    UpdateBreakTimerSettingsRequest:
+      type: object
+      properties:
+        workDurationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 240
+        breakDurationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 60
+        notificationModes:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationMode"
+        workMessage:
+          type: string
+        breakMessage:
+          type: string
+        endShiftMessage:
+          type: string
+        audioEnabled:
+          type: boolean
+        colorSequencePattern:
+          type: string
+          enum: [pulse, flash, sweep, wave, radiate]
+        transparencyLevel:
+          type: number
+          minimum: 0
+          maximum: 1
